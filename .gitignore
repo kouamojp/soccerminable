@@ -1,1 +1,14 @@
+# Files to ignore for SoccerMidable
+
+# Configuration (contains secrets!)
+config.php
+
+# Logs
+stripe_debug.log
+
+# Directories
 videos/
+.vscode/
+.idea/
+node_modules/
+vendor/

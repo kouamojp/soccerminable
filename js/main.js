@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { passive: true });
 
   /* ── MOBILE MENU ── */
-  const hamburger  = document.getElementById('hamburger');
+  const hamburger = document.getElementById('hamburger');
   const mobileMenu = document.getElementById('mobileMenu');
   let menuOpen = false;
 
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }, { threshold: 0.25 });
-  ['impact','hero'].forEach(id => {
+  ['impact', 'hero'].forEach(id => {
     const el = document.getElementById(id);
     if (el) numObserver.observe(el);
   });
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ── BACK TO TOP ── */
   const backTop = document.getElementById('back-top');
   window.addEventListener('scroll', () => backTop.classList.toggle('visible', window.scrollY > 400), { passive: true });
-  backTop.addEventListener('click', () => window.scrollTo({ top:0, behavior:'smooth' }));
+  backTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
   /* ── TOAST ── */
   window.showToast = (msg) => {
@@ -111,14 +111,14 @@ document.addEventListener('DOMContentLoaded', () => {
   window.submitForm = async () => {
     const lang = document.body.getAttribute('data-lang') || 'fr';
     const fields = {
-      parentFirst : document.getElementById('parentFirst'),
-      parentLast  : document.getElementById('parentLast'),
-      parentEmail : document.getElementById('parentEmail'),
-      parentPhone : document.getElementById('parentPhone'),
-      childName   : document.getElementById('childName'),
-      childAge    : document.getElementById('childAge'),
-      program     : document.getElementById('program'),
-      message     : document.getElementById('message'),
+      parentFirst: document.getElementById('parentFirst'),
+      parentLast: document.getElementById('parentLast'),
+      parentEmail: document.getElementById('parentEmail'),
+      parentPhone: document.getElementById('parentPhone'),
+      childName: document.getElementById('childName'),
+      location: document.getElementById('location'),
+      program: document.getElementById('program'),
+      message: document.getElementById('message'),
     };
     if (!fields.parentFirst.value.trim() || !fields.parentEmail.value.trim()) {
       showToast(lang === 'fr' ? '⚠️ Veuillez remplir les champs obligatoires.' : '⚠️ Please fill in the required fields.');
@@ -134,40 +134,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const FORMSPREE_ID = 'YOUR_FORM_ID';
     const data = {
-      parentName : `${fields.parentFirst.value} ${fields.parentLast.value}`,
-      email      : fields.parentEmail.value,
-      phone      : fields.parentPhone.value,
-      child      : fields.childName.value,
-      age        : fields.childAge.value,
-      program    : fields.program.value,
-      message    : fields.message.value,
-      submitted  : new Date().toLocaleString('fr-CA'),
+      parentName: `${fields.parentFirst.value} ${fields.parentLast.value}`,
+      email: fields.parentEmail.value,
+      phone: fields.parentPhone.value,
+      /* child: fields.childName.value, */
+      location: fields.location.value,
+      program: fields.program.value,
+      message: fields.message.value,
+      submitted: new Date().toLocaleString('fr-CA'),
     };
 
-    if (FORMSPREE_ID !== 'YOUR_FORM_ID') {
-      try {
-        const res = await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
-          method:'POST', headers:{'Accept':'application/json','Content-Type':'application/json'},
-          body: JSON.stringify({ _subject:'Inscription SoccerMidable', ...data }),
-        });
-        if (!res.ok) throw new Error();
-      } catch {
-        showToast('❌ Erreur réseau.');
-        btn.disabled = false;
-        btn.textContent = lang === 'fr' ? "⚽ S'inscrire" : '⚽ Register Now';
-        return;
-      }
-    } else {
-      const mailBody = encodeURIComponent(
-        `Nouvelle inscription SoccerMidable\n\nParent: ${data.parentName}\nCourriel: ${data.email}\nTél: ${data.phone}\nEnfant: ${data.child} (${data.age})\nProgramme: ${data.program}\nMessage: ${data.message}\n\nDate: ${data.submitted}`
-      );
-      window.open(`mailto:info@soccermidable.com?subject=Inscription%20SoccerMidable&body=${mailBody}`);
-    }
+    // --- STRIPE INTEGRATION ---
+    try {
+      btn.textContent = lang === 'fr' ? '💳 Paiement...' : '💳 Checkout...';
+      
+      const response = await fetch('checkout.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
 
+      if (!response.ok) throw new Error('Erreur de serveur');
+      
+      const session = await response.json();
+      
+      // Redirection vers Stripe Checkout
+      window.location.href = session.url;
+
+    } catch (err) {
+      console.error(err);
+      showToast(lang === 'fr' ? '❌ Erreur de connexion au paiement.' : '❌ Payment connection error.');
+      btn.disabled = false;
+      btn.textContent = lang === 'fr' ? "⚽ S'inscrire" : '⚽ Register Now';
+    }
+  };
+
+  /* ── GESTION RETOUR PAIEMENT ── */
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('payment') === 'success') {
     document.getElementById('regFormInner').style.display = 'none';
     document.getElementById('formSuccess').classList.add('show');
-    window.scrollTo({ top: document.getElementById('register').offsetTop - 80, behavior:'smooth' });
-  };
+    // Scroll au formulaire pour voir le message de succès
+    const formSection = document.getElementById('register');
+    if (formSection) formSection.scrollIntoView({ behavior: 'smooth' });
+  } else if (urlParams.get('payment') === 'cancel') {
+    showToast('⚠️ Paiement annulé. Vous pouvez réessayer.', 5000);
+  }
+});
 
   /* ── SMOOTH ANCHOR SCROLL ── */
   document.querySelectorAll('a[href^="#"]').forEach(link => {
@@ -193,5 +206,3 @@ document.addEventListener('DOMContentLoaded', () => {
     { threshold: 0.1, rootMargin: '200px' }
   );
   document.querySelectorAll('iframe[data-src]').forEach(f => lazyIframes.observe(f));
-
-});
