@@ -107,8 +107,8 @@ try {
         ]],
         'mode' => 'payment',
         'customer_email' => !empty($data->email) ? $data->email : null,
-        'success_url' => $baseUrl . '/index.html?payment=success',
-        'cancel_url' => $baseUrl . '/index.html?payment=cancel',
+        'success_url' => $baseUrl . '/?payment=success',
+        'cancel_url' => $baseUrl . '/?payment=cancel',
         'metadata' => [
             'parent_name' => $data->parentName ?? 'Inconnu',
             'program'     => $program,
