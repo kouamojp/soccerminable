@@ -836,3 +836,15 @@ footer { background:var(--dark); color:white; padding:60px 0 25px; }
 @media(max-width:768px){
   .kids-grid { display: none; }
 }
+
+.consent-group {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  align-items: baseline;
+
+  input {
+    position: relative;
+    top: .25rem;
+  }
+}

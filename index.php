@@ -1,3 +1,20 @@
+<?php
+require_once 'admin/db.php';
+
+// Fonction helper pour récupérer le texte traduit
+function t($key) {
+    global $pdo;
+    static $content_cache = null;
+    if ($content_cache === null) {
+        $stmt = $pdo->query("SELECT section_key, content_fr, content_en FROM site_content");
+        $content_cache = [];
+        while ($row = $stmt->fetch()) {
+            $content_cache[$row['section_key']] = $row;
+        }
+    }
+    return $content_cache[$key] ?? ['content_fr' => "[$key]", 'content_en' => "[$key]"];
+}
+?>
 <!DOCTYPE html>
 <html lang="fr" data-lang="fr">
 <head>
@@ -14,7 +31,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=1.1.5">
+<link rel="stylesheet" href="css/style.css?v=1.1.6">
 </head>
 <body data-lang="fr">
 
@@ -87,11 +104,15 @@
           <span class="en">Ottawa–Gatineau · Founded 2018 · Ages 2–14</span>
         </div>
         <h1 class="hero-title brand-name">
-          <span class="soccer" style="color:white;">Soccer</span><span class="line-gold">Midable</span>
+          <?php $h = t('hero_title_soccer'); ?>
+          <span class="soccer" style="color:white;"><?= $h['content_fr'] ?></span>
+          <?php $h2 = t('hero_title_midable'); ?>
+          <span class="line-gold"><?= $h2['content_fr'] ?></span>
         </h1>
         <p class="hero-sub">
-          <span class="fr">Plus qu'un programme de soccer — une plateforme de <strong>leadership</strong>, de <strong>confiance</strong> et d'épanouissement pour les champions de demain.</span>
-          <span class="en">More than soccer — a platform for <strong>leadership</strong>, <strong>confidence</strong> and personal growth for tomorrow's champions.</span>
+          <?php $sub = t('hero_sub'); ?>
+          <span class="fr"><?= $sub['content_fr'] ?></span>
+          <span class="en"><?= $sub['content_en'] ?></span>
         </p>
         <div class="hero-actions">
           <a href="#register" class="btn btn-gold">
@@ -183,10 +204,12 @@
       </div>
       <div class="reveal d2">
         <div class="section-tag"><span class="fr">Notre vision</span><span class="en">Our Vision</span></div>
-        <h2 class="section-title fr">Un but à la <span class="accent">fois</span></h2>
-        <h2 class="section-title en">One <span class="accent">goal</span> at a time</h2>
-        <p class="section-lead fr">Notre vision est d'utiliser le sport comme levier de transformation : favoriser l'accès au sport pour tous, inculquer de saines habitudes de vie aux jeunes, soutenir leur épanouissement et former des champions de la vie, prêts à inspirer des changements positifs dans leurs communautés.</p>
-        <p class="section-lead en">Our vision is to use sport as a driver of transformation: increase access for all, instill healthy habits in youth, support personal growth through values, and develop champions in life — ready to inspire positive change in their communities and beyond.</p>
+        <?php $v = t('vision_title'); ?>
+        <h2 class="section-title fr"><?= $v['content_fr'] ?></h2>
+        <h2 class="section-title en"><?= $v['content_en'] ?></h2>
+        <?php $vl = t('vision_lead'); ?>
+        <p class="section-lead fr"><?= $vl['content_fr'] ?></p>
+        <p class="section-lead en"><?= $vl['content_en'] ?></p>
         <div style="margin-top:2rem;">
           <a href="#register" class="btn btn-purple">
             <span class="fr">Rejoindre <span class="brand-name" style="font-size:inherit;"><span class="soccer" style="color:inherit;">Soccer</span><span class="midable" style="color:var(--gold-light);">Midable</span></span></span>
@@ -756,14 +779,22 @@
         <div class="reg-form-box">
           <div id="regFormInner">
             <div class="reg-form-title">📝 <span class="fr">Formulaire d'inscription</span><span class="en">Registration Form</span></div>
-            <div class="form-group">
-              <label class="form-label"><span class="fr">Prénom du parent *</span><span class="en">Parent's First Name *</span></label>
-              <input id="parentFirst" type="text" class="form-input" placeholder="Jean / John">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label"><span class="fr">Nom du parent 1 *</span><span class="en">Parent's Name 1 *</span></label>
+                <input id="parentName_1" type="text" class="form-input" placeholder="Jean / John">
+              </div>
+              <div class="form-group">
+                <label class="form-label"><span class="fr">Nom du parent 2 *</span><span class="en">Parent's Name 2 *</span></label>
+                <input id="parentName_2" type="text" class="form-input" placeholder="Marie / Jane">
+              </div>
             </div>
+
             <div class="form-group">
-              <label class="form-label"><span class="fr">Nom de famille *</span><span class="en">Last Name *</span></label>
-              <input id="parentLast" type="text" class="form-input" placeholder="Dupont">
+              <label class="form-label"><span class="fr">Adresse</span><span class="en">Address</span></label>
+              <input id="parentAddress" type="text" class="form-input" placeholder="123 Rue Principale">
             </div>
+
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label"><span class="fr">Courriel *</span><span class="en">Email *</span></label>
@@ -774,30 +805,55 @@
                 <input id="parentPhone" type="tel" class="form-input" placeholder="613-xxx-xxxx">
               </div>
             </div>
-            <!-- <div class="form-group"> -->
-              <!-- <label class="form-label"><span class="fr">Prénom de l'enfant</span><span class="en">Child's First Name</span></label> -->
-              <!-- <input id="childName" type="text" class="form-input" placeholder="Sophia"> -->
-            <!-- </div> -->
-            <div class="form-group">
-              <label class="form-label"><span class="fr">Localisation</span><span class="en">Location</span></label>
-              <select id="location" class="form-input">
-                <option value="">—</option>
-                <option>Kanata</option><option>Alymer</option><option>Orleans</option>
-              </select>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label"><span class="fr">Nom et prénom de l'enfant</span><span class="en">Child's Full Name</span></label>
+                <input id="childName" type="text" class="form-input" placeholder="Nom complet de l'enfant">
+              </div>
+              <div class="form-group">
+                <label class="form-label"><span class="fr">Date de naissance</span><span class="en">Date of Birth</span></label>
+                  <input id="childDOB" type="date" class="form-input">
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label"><span class="fr">Programme d'intérêt</span><span class="en">Program of Interest</span></label>
-              <select id="program" class="form-input">
-                <option value="">—</option>
-                <option value="U2-3 de 9h à 9h30">U2-3 de 9h à 9h30</option>
-                <option value="U4-5 de 9h45 à 10h30">U4-5 de 9h45 à 10h30</option>
-                <option value="U6-9 de 10h45 à 11h30">U6-9 de 10h45 à 11h30</option>
-                <option value="U10-13 de 10h45 à 11h30">U10-13 de 10h45 à 11h30</option>
-              </select>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label"><span class="fr">Localisation</span><span class="en">Location</span></label>
+                <select id="location" class="form-input">
+                  <option value="">—</option>
+                  <option>Kanata</option><option>Alymer</option><option>Orleans</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label"><span class="fr">Programme d'intérêt</span><span class="en">Program of Interest</span></label>
+                <select id="program" class="form-input">
+                  <option value="">—</option>
+                  <?php 
+                  $progs = get_active_programs();
+                  foreach ($progs as $p): 
+                  ?>
+                  <option value="<?= htmlspecialchars($p['name_fr']) ?>"><?= htmlspecialchars($p['name_fr']) ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
             </div>
+
             <div class="form-group">
               <label class="form-label"><span class="fr">Message (optionnel)</span><span class="en">Message (optional)</span></label>
               <textarea id="message" class="form-input" rows="3" style="resize:vertical;" placeholder="Questions ou commentaires…"></textarea>
+            </div>
+
+            <div class="form-group consent-group">
+              <input type="checkbox" id="consent-1" class="form-checkbox">
+              <label class="form-label"><span class="fr">Décharge de responsabilité <br> Je comprends que la participation à des activités sportives comporte certains risques. J’accepte que l’Association sportive SoccerMidable, son personnel, ses entraîneurs(euses) et volontaires ne puissent être tenus responsables des blessures ou accident pouvant survenir durant la participation. Une assistance médicale d’urgence peut être fournie si nécessaire</span>
+              <span class="en">Liability waiver <br> I understand that participation in sports involves physical activity and certain risks. I release Association sportive SoccerMidable, its staff, coaches and volunteers from any claims related to injuries or accidents that may occur during participation. Emergency medical attention may be provided if necessary.</span></label>
+            </div>
+            
+            <div class="form-group consent-group">
+              <input type="checkbox" id="consent-2" class="form-checkbox">
+              <label class="form-label"><span class="fr">Consentement photo/vidéo <br> J’autorise l’Association sportive SoccerMidable à prendre des photos, vidéos ou enregistrements audio de mon enfant dans le cadre des activités du programme, à des fins documentaires ou promotionnelles. Aucun nom ne sera partagé.</span>
+              <span class="en">Photo/ Video Consent <br> I authorize Association Sportive SoccerMidable to take photos, videos and audio recordings of my child during program activities for documentation and promotional purposes. No names will be shared.</span></label>
             </div>
             <button class="form-submit" onclick="submitForm()">
               ⚽ <span class="fr">S'inscrire maintenant</span><span class="en">Register Now</span>
@@ -942,6 +998,6 @@
 
 <button id="back-top" aria-label="Back to top">↑</button>
 <div id="toast"></div>
-<script src="js/main.js?v=1.1.5"></script>
+<script src="js/main.js?v=1.1.6"></script>
 </body>
 </html>

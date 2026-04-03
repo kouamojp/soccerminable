@@ -22,6 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+require_once 'admin/db.php';
+
 try {
     if (!file_exists('stripe-php/init.php')) {
         throw new Exception("Le dossier 'stripe-php' est manquant ou mal placé.");
@@ -56,13 +58,16 @@ try {
         }
     }
 
-    // Mapping des programmes vers vos IDs de PRIX Stripe (price_...)
-    $prices = [
-        'U2-3 de 9h à 9h30'      => 'price_1OiamBGQ0rWfGoQQX0eIz9sv',
-        'U4-5 de 9h45 à 10h30'   => 'price_1TDv9BGQ0rWfGoQQTKdhFAd7',
-        'U6-9 de 10h45 à 11h30'   => 'price_1TDv9sGQ0rWfGoQQGF2DKdzm',
-        'U10-13 de 10h45 à 11h30' => 'price_1TDvAQGQ0rWfGoQQo28WmwGv',
-    ];
+    // Récupération des programmes et prix depuis la base de données
+    $stmt = $pdo->query("SELECT name_fr, price_id_stripe FROM programs WHERE is_active = 1");
+    $prices = [];
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $prices[$row['name_fr']] = $row['price_id_stripe'];
+    }
+
+    if (empty($prices)) {
+        throw new Exception("Aucun programme n'est configuré dans la base de données.");
+    }
 
     $program = trim($data->program ?? '');
     stripe_log("Selected program: '$program'");

@@ -111,36 +111,52 @@ document.addEventListener('DOMContentLoaded', () => {
   window.submitForm = async () => {
     const lang = document.body.getAttribute('data-lang') || 'fr';
     const fields = {
-      parentFirst: document.getElementById('parentFirst'),
-      parentLast: document.getElementById('parentLast'),
+      parentName1: document.getElementById('parentName_1'),
+      parentName2: document.getElementById('parentName_2'),
+      parentAddress: document.getElementById('parentAddress'),
       parentEmail: document.getElementById('parentEmail'),
       parentPhone: document.getElementById('parentPhone'),
       childName: document.getElementById('childName'),
+      childDOB: document.getElementById('childDOB'),
       location: document.getElementById('location'),
       program: document.getElementById('program'),
       message: document.getElementById('message'),
+      consent1: document.getElementById('consent-1'),
+      consent2: document.getElementById('consent-2')
     };
-    if (!fields.parentFirst.value.trim() || !fields.parentEmail.value.trim()) {
-      showToast(lang === 'fr' ? '⚠️ Veuillez remplir les champs obligatoires.' : '⚠️ Please fill in the required fields.');
-      fields.parentFirst.focus(); return;
+
+    // Validation
+    if (!fields.parentName1.value.trim() || !fields.parentEmail.value.trim() || !fields.program.value) {
+      showToast(lang === 'fr' ? '⚠️ Veuillez remplir les champs obligatoires (*).' : '⚠️ Please fill in all required fields (*).');
+      return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.parentEmail.value)) {
       showToast(lang === 'fr' ? '⚠️ Courriel invalide.' : '⚠️ Invalid email address.');
       fields.parentEmail.focus(); return;
     }
+    if (!fields.consent1.checked) {
+      showToast(lang === 'fr' ? '⚠️ Vous devez accepter la décharge de responsabilité.' : '⚠️ You must accept the liability waiver.');
+      return;
+    }
+
     const btn = document.querySelector('.form-submit');
+    const origText = btn.innerHTML;
     btn.disabled = true;
     btn.textContent = lang === 'fr' ? '⏳ Envoi...' : '⏳ Sending...';
 
-    const FORMSPREE_ID = 'YOUR_FORM_ID';
     const data = {
-      parentName: `${fields.parentFirst.value} ${fields.parentLast.value}`,
+      parentName: fields.parentName1.value,
+      parentName2: fields.parentName2.value,
+      address: fields.parentAddress.value,
       email: fields.parentEmail.value,
       phone: fields.parentPhone.value,
-      /* child: fields.childName.value, */
+      childName: fields.childName.value,
+      childDOB: fields.childDOB.value,
       location: fields.location.value,
       program: fields.program.value,
       message: fields.message.value,
+      consent_liability: fields.consent1.checked,
+      consent_media: fields.consent2.checked,
       submitted: new Date().toLocaleString('fr-CA'),
     };
 
@@ -154,18 +170,17 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify(data)
       });
 
-      if (!response.ok) throw new Error('Erreur de serveur');
-      
-      const session = await response.json();
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Erreur de serveur');
       
       // Redirection vers Stripe Checkout
-      window.location.href = session.url;
+      window.location.href = result.url;
 
     } catch (err) {
       console.error(err);
-      showToast(lang === 'fr' ? '❌ Erreur de connexion au paiement.' : '❌ Payment connection error.');
+      showToast(lang === 'fr' ? `❌ Erreur : ${err.message}` : `❌ Error: ${err.message}`);
       btn.disabled = false;
-      btn.textContent = lang === 'fr' ? "⚽ S'inscrire" : '⚽ Register Now';
+      btn.innerHTML = origText;
     }
   };
 
