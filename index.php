@@ -31,7 +31,7 @@ function t($key) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=1.1.6">
+<link rel="stylesheet" href="css/style.css?v=1.1.7">
 </head>
 <body data-lang="fr">
 
@@ -998,6 +998,6 @@ function t($key) {
 
 <button id="back-top" aria-label="Back to top">↑</button>
 <div id="toast"></div>
-<script src="js/main.js?v=1.1.6"></script>
+<script src="js/main.js?v=1.1.7"></script>
 </body>
 </html>
