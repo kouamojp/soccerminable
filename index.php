@@ -805,8 +805,7 @@ function t($key) {
                 <input id="parentPhone" type="tel" class="form-input" placeholder="613-xxx-xxxx">
               </div>
             </div>
-
-            <div class="form-row">
+     
               <div class="form-group">
                 <label class="form-label"><span class="fr">Nom et prénom de l'enfant</span><span class="en">Child's Full Name</span></label>
                 <input id="childName" type="text" class="form-input" placeholder="Nom complet de l'enfant">
@@ -815,7 +814,6 @@ function t($key) {
                 <label class="form-label"><span class="fr">Date de naissance</span><span class="en">Date of Birth</span></label>
                   <input id="childDOB" type="date" class="form-input">
               </div>
-            </div>
             
             <div class="form-row">
               <div class="form-group">
