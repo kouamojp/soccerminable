@@ -12,6 +12,13 @@ $count_programs = $stmt->fetchColumn();
 
 $stmt = $pdo->query("SELECT COUNT(*) FROM site_content");
 $count_content = $stmt->fetchColumn();
+
+$stmt = $pdo->query("SELECT COUNT(*) FROM registrations");
+$count_registrations = $stmt->fetchColumn();
+
+
+$locations = $pdo->query("SELECT COUNT(*) FROM locations");
+$count_locations = $locations->fetchColumn();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -66,6 +73,7 @@ $count_content = $stmt->fetchColumn();
         </div>
         <div class="sidebar-menu">
             <a href="index.php" class="active">Tableau de bord</a>
+            <a href="manage-registrations.php">Inscriptions</a>
             <a href="manage-content.php">Gestion des Textes</a>
             <a href="manage-programs.php">Gestion des Programmes</a>
             <a href="manage-testimonials.php">Témoignages</a>
@@ -83,14 +91,19 @@ $count_content = $stmt->fetchColumn();
 
         <div class="stats-grid">
             <div class="stat-card">
+                <h3>Inscriptions</h3>
+                <div class="num"><?= $count_registrations ?></div>
+                <a href="manage-registrations.php" class="btn-action">Gérer</a>
+            </div>
+            <div class="stat-card">
+                <h3>Lieux</h3>
+                <div class="num"><?= $count_locations ?></div>
+                <a href="manage-locations.php" class="btn-action">Gérer</a>
+            </div>
+            <div class="stat-card">
                 <h3>Programmes Actifs</h3>
                 <div class="num"><?= $count_programs ?></div>
                 <a href="manage-programs.php" class="btn-action">Gérer</a>
-            </div>
-            <div class="stat-card">
-                <h3>Champs de Texte</h3>
-                <div class="num"><?= $count_content ?></div>
-                <a href="manage-content.php" class="btn-action">Éditer</a>
             </div>
         </div>
 

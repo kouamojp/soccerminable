@@ -35,7 +35,16 @@ function get_site_content($key) {
  */
 function get_active_programs() {
     global $pdo;
-    $stmt = $pdo->query("SELECT * FROM programs WHERE is_active = 1");
+    $stmt = $pdo->query("SELECT id, name_fr, name_en, location_id FROM programs WHERE is_active = 1");
+    return $stmt->fetchAll();
+}
+
+/**
+ * Récupère les lieux actifs
+ */
+function get_active_locations() {
+    global $pdo;
+    $stmt = $pdo->query("SELECT * FROM locations WHERE is_active = 1");
     return $stmt->fetchAll();
 }
 ?>

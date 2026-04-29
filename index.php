@@ -1,6 +1,49 @@
 <?php
 require_once 'admin/db.php';
 
+// --- TRAITEMENT DU RETOUR DE PAIEMENT RÉUSSI ---
+if (isset($_GET['payment']) && $_GET['payment'] === 'success' && isset($_GET['reg_id'])) {
+    $reg_id = intval($_GET['reg_id']);
+    
+    // 1. Vérifier si elle n'est pas déjà marquée comme payée
+    $stmt = $pdo->prepare("SELECT * FROM registrations WHERE id = ? AND payment_status = 'pending'");
+    $stmt->execute([$reg_id]);
+    $registration = $stmt->fetch();
+
+    if ($registration) {
+        // 2. Mettre à jour le statut en base de données
+        $update = $pdo->prepare("UPDATE registrations SET payment_status = 'paid' WHERE id = ?");
+        $update->execute([$reg_id]);
+
+        // 3. Récupérer l'email de notification configuré
+        $to_stmt = $pdo->prepare("SELECT content_fr FROM site_content WHERE section_key = 'notification_email'");
+        $to_stmt->execute();
+        $to_email = $to_stmt->fetchColumn() ?: 'info@soccermidable.com';
+
+        // 4. Envoyer l'email de confirmation (Paiement Réussi)
+        $subject = "✅ PAIEMENT REÇU - Inscription SoccerMidable : " . $registration['child_name'];
+        $body = "Bonne nouvelle ! Un paiement a été validé pour une inscription.\n\n";
+        $body .= "DÉTAILS DE L'INSCRIPTION :\n";
+        $body .= "-----------------------------------\n";
+        $body .= "Parent 1 : " . $registration['parent_name_1'] . "\n";
+        $body .= "Parent 2 : " . $registration['parent_name_2'] . "\n";
+        $body .= "Enfant : " . $registration['child_name'] . " (Né le: " . $registration['child_dob'] . ")\n";
+        $body .= "Email : " . $registration['email'] . "\n";
+        $body .= "Téléphone : " . $registration['phone'] . "\n";
+        $body .= "Programme : " . $registration['program'] . "\n";
+        $body .= "Localisation : " . $registration['location'] . "\n";
+        $body .= "-----------------------------------\n";
+        $body .= "Statut du paiement : CONFIRMÉ (Stripe)\n";
+        $body .= "ID Inscription : " . $reg_id . "\n";
+        
+        $headers = "From: SoccerMidable <no-reply@soccermidable.ca>\r\n";
+        $headers .= "Reply-To: " . $registration['email'] . "\r\n";
+        $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+        
+        mail($to_email, $subject, $body, $headers);
+    }
+}
+
 // Fonction helper pour récupérer le texte traduit
 function t($key) {
     global $pdo;
@@ -815,28 +858,54 @@ function t($key) {
                   <input id="childDOB" type="date" class="form-input">
               </div>
             
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label"><span class="fr">Localisation</span><span class="en">Location</span></label>
-                <select id="location" class="form-input">
-                  <option value="">—</option>
-                  <option>Kanata</option><option>Alymer</option><option>Orleans</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label"><span class="fr">Programme d'intérêt</span><span class="en">Program of Interest</span></label>
-                <select id="program" class="form-input">
-                  <option value="">—</option>
-                  <?php 
-                  $progs = get_active_programs();
-                  foreach ($progs as $p): 
-                  ?>
-                  <option value="<?= htmlspecialchars($p['name_fr']) ?>"><?= htmlspecialchars($p['name_fr']) ?></option>
-                  <?php endforeach; ?>
-                </select>
-              </div>
+            <div class="form-group">
+              <label class="form-label"><span class="fr">Localisation</span><span class="en">Location</span></label>
+              <select id="location" class="form-input" onchange="filterPrograms()">
+                <option value="">—</option>
+                <?php
+                $locs = get_active_locations();
+                foreach ($locs as $l):
+                ?>
+                <option value="<?= htmlspecialchars($l['id']) ?>" data-name="<?= htmlspecialchars($l['name']) ?>"><?= htmlspecialchars($l['name']) ?></option>
+                <?php endforeach; ?>
+              </select>
             </div>
 
+            <div class="form-group">
+              <label class="form-label"><span class="fr">Programme d'intérêt</span><span class="en">Program of Interest</span></label>
+              <select id="program" class="form-input">
+                <option value="">—</option>
+              </select>
+            </div>
+
+            <script>
+              const allPrograms = <?php echo json_encode(get_active_programs()); ?>;
+              function filterPrograms() {
+                const locSelect = document.getElementById('location');
+                const progSelect = document.getElementById('program');
+                const locId = locSelect.value;
+                const lang = document.body.getAttribute('data-lang') || 'fr';
+
+                progSelect.innerHTML = '<option value="">—</option>';
+
+                if (!locId) {
+                  progSelect.innerHTML = lang === 'fr' ? '<option value="">— Choisissez d\'abord un lieu —</option>' : '<option value="">— Choose a location first —</option>';
+                  return;
+                }
+
+                const filtered = allPrograms.filter(p => p.location_id == locId);
+                if (filtered.length === 0) {
+                  progSelect.innerHTML = lang === 'fr' ? '<option value="">—</option>' : '<option value="">—</option>';
+                } else {
+                  filtered.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.name_fr;
+                    opt.textContent = lang === 'fr' ? p.name_fr : p.name_en;
+                    progSelect.appendChild(opt);
+                  });
+                }
+              }
+            </script>
             <div class="form-group">
               <label class="form-label"><span class="fr">Message (optionnel)</span><span class="en">Message (optional)</span></label>
               <textarea id="message" class="form-input" rows="3" style="resize:vertical;" placeholder="Questions ou commentaires…"></textarea>

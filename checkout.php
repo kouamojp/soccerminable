@@ -98,6 +98,31 @@ try {
 
     stripe_log("Base URL: $baseUrl");
 
+    // --- ENREGISTREMENT DANS LA BASE DE DONNÉES ---
+    $stmt = $pdo->prepare("INSERT INTO registrations (
+        parent_name_1, parent_name_2, address, email, phone, 
+        child_name, child_dob, location, program, message, 
+        consent_liability, consent_media, payment_status
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')");
+
+    $stmt->execute([
+        $data->parentName ?? 'Inconnu',
+        $data->parentName2 ?? null,
+        $data->address ?? null,
+        $data->email ?? 'inconnu@exemple.com',
+        $data->phone ?? null,
+        $data->childName ?? null,
+        $data->childDOB ?? null,
+        $data->location ?? null,
+        $program,
+        $data->message ?? null,
+        isset($data->consent_liability) ? ($data->consent_liability ? 1 : 0) : 0,
+        isset($data->consent_media) ? ($data->consent_media ? 1 : 0) : 0
+    ]);
+    
+    $registrationId = $pdo->lastInsertId();
+    stripe_log("Registration saved to DB with ID: $registrationId");
+
     // Création de la session Stripe Checkout
     $session = \Stripe\Checkout\Session::create([
         'payment_method_types' => ['card'],
@@ -107,14 +132,18 @@ try {
         ]],
         'mode' => 'payment',
         'customer_email' => !empty($data->email) ? $data->email : null,
-        'success_url' => $baseUrl . '/?payment=success',
+        'success_url' => $baseUrl . '/?payment=success&reg_id=' . $registrationId,
         'cancel_url' => $baseUrl . '/?payment=cancel',
         'metadata' => [
-            'parent_name' => $data->parentName ?? 'Inconnu',
-            'program'     => $program,
-            'phone'       => $data->phone ?? 'Non précisé'
+            'registration_id' => $registrationId,
+            'parent_name'     => $data->parentName ?? 'Inconnu',
+            'program'          => $program
         ]
     ]);
+
+    // Mettre à jour la session ID dans la base
+    $stmt = $pdo->prepare("UPDATE registrations SET stripe_session_id = ? WHERE id = ?");
+    $stmt->execute([$session->id, $registrationId]);
 
     stripe_log("Session created successfully: " . $session->id);
     echo json_encode(['url' => $session->url]);

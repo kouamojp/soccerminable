@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
       phone: fields.parentPhone.value,
       childName: fields.childName.value,
       childDOB: fields.childDOB.value,
-      location: fields.location.value,
+      location: fields.location.options[fields.location.selectedIndex].getAttribute('data-name') || '',
       program: fields.program.value,
       message: fields.message.value,
       consent_liability: fields.consent1.checked,
